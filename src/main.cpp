@@ -38,10 +38,21 @@ using namespace std;
 
 #include <immintrin.h>
 
-void MyAbsolute (const std::complex<float>* __restrict cplxIn,
+inline void float_t_show(const __m256 reg)
+{
+    float values[8];
+    _mm256_storeu_ps (values, reg);
+	for(int i = 0; i < 8; i++)
+	{
+		printf("%6.3f ", values[i]);
+	}
+	printf("\n");
+}
+
+
+void cplxModule (const std::complex<float>* __restrict cplxIn,
                        float* __restrict absOut, const int length)
 {
-#ifdef __AVX2__
     const float* pIn1 = reinterpret_cast<const float*> (cplxIn + 0);
     const float* pIn2 = reinterpret_cast<const float*> (cplxIn + 4);
           float* pOut = absOut;
@@ -59,26 +70,43 @@ void MyAbsolute (const std::complex<float>* __restrict cplxIn,
         _mm256_storeu_ps (pOut, _mm256_castpd_ps(ordered));
         pOut += 8;
     }
+}
 
-    int start = (length >> 3) << 3;
-    for (int i = start; i < length; i += 8)
+
+void cplxMult (
+    const std::complex<float>* __restrict cplxIn,
+    const std::complex<float>* __restrict cplxMul,
+          std::complex<float>* __restrict cplxOu,
+    const int length)
+{
+    const float* pIn  = reinterpret_cast<const float*> (cplxIn );
+    const float* pMul = reinterpret_cast<const float*> (cplxMul);
+          float* pOut = reinterpret_cast<      float*> (cplxOu );
+
+    const __m256 b     = _mm256_loadu_ps ( pMul );
+    const __m256 bSwap = _mm256_shuffle_ps( b, b, 0xB1 );
+
+    for (int i = 0; i < length; i += 8)
     {
-        float rr = cplxIn[i].real() * cplxIn[i].real() ;
-        float ii = cplxIn[i].imag() * cplxIn[i].imag() ;
-        float mod2 = rr + ii;
-        float mod = sqrtf(mod2);
-        absOut[i] = mod;
-    }
+        const __m256 a         = _mm256_loadu_ps  ( pIn  + i );
+        const __m256 aRe       = _mm256_shuffle_ps( a, a, 0xA0 );
+        const __m256 aIm       = _mm256_shuffle_ps( a, a, 0xF5 );
+        const __m256 aIm_bSwap = _mm256_mul_ps    (aIm, bSwap);
+        const __m256 aRe_b     = _mm256_mul_ps    (aRe, b    );
+        const __m256 res       = _mm256_addsub_ps(aRe_b, aIm_bSwap);
 
-    //
-    //
-    //
-//    if( length & 0x07 )
-//    {
-//        printf("Oups il reste des données !\n");
-//        exit( EXIT_FAILURE );
-//    }
-#endif
+        printf("b         : "); float_t_show( b );
+        printf("bSwap     : "); float_t_show( bSwap );
+        printf("a         : "); float_t_show( a );
+        printf("aRe       : "); float_t_show( aRe );
+        printf("aIm       : "); float_t_show( aIm );
+        printf("aIm_bSwap : "); float_t_show( aIm_bSwap );
+        printf("aRe_b     : "); float_t_show( aRe_b );
+        printf("res       : "); float_t_show( res );
+        printf("\n");
+
+        _mm256_storeu_ps (pOut + i, res);
+    }
 }
 
 
@@ -124,8 +152,27 @@ int main(int argc, char* argv[])
 		A.push_back( c );
 	}
 
+    std::cout << std::endl << "Données initiales : " << std::endl;
 	float_t_show( A );	
-		
+	
+	vector< float > B( A.size() );
+
+    cplxModule(A.data(), B.data(), A.size() );
+
+    std::cout << std::endl << "Calcul du module : " << std::endl;
+	float_t_show( B );
+
+    std::complex<float> otherCplx[4];
+    const __m256 c = _mm256_set_ps(1.0f, 2.0f, 1.0f, 2.0f, 1.0f, 2.0f, 1.0f, 2.0f);
+    _mm256_storeu_ps ((float*)otherCplx, c);
+
+	vector< complex<float> > C;
+    C.resize( A.size() );
+
+    cplxMult(A.data(), otherCplx, C.data(), A.size() );
+
+    std::cout << std::endl << "Resultat multiplication : " << std::endl;
+	float_t_show( C );
 
     return 1;
 }
