@@ -1,6 +1,7 @@
 CC=g++
 
-CFLAGS=-O3 -march=native -mtune=native -std=c++11
+CFLAGS=-O3 -mtune=native -std=c++11
+#CFLAGS=-O3 -march=native -mtune=native -std=c++11
 
 LDFLAGS=
 
