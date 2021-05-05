@@ -148,7 +148,7 @@ int main(int argc, char* argv[])
 	
 	for(int i = 0; i < SIZE; i += 1)
 	{
-		complex<float> c(i, i);
+		complex<float> c(i, -i);
 		A.push_back( c );
 	}
 
