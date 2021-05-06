@@ -44,7 +44,7 @@ inline void float_t_show(const __m256 reg)
     _mm256_storeu_ps (values, reg);
 	for(int i = 0; i < 8; i++)
 	{
-		printf("%6.3f ", values[i]);
+		printf("%7.3f ", values[i]);
 	}
 	printf("\n");
 }
@@ -122,7 +122,7 @@ inline void float_t_show(const vector<float>& liste)
 		{
 			printf("\n");
 		}
-		printf("%1.3f ", liste.at(i));
+		printf("%7.3f ", liste.at(i));
 	}
 	printf("\n");
 }
@@ -133,7 +133,7 @@ inline void float_t_show(const vector< complex<float> >& cplx)
 	{
 		if( (i%8 == 0) && (i != 0) )
 			printf("\n");
-		printf("(%6.3f, %6.3f) ", cplx[i].real(), cplx[i].imag());
+		printf("(%7.3f, %7.3f) ", cplx[i].real(), cplx[i].imag());
 	}
 	printf("\n");
 }
