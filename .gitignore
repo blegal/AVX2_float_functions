@@ -32,3 +32,7 @@
 *.app
 .DS_Store
 bin/main
+
+# Vscode files
+*.vscode
+*.code-workspace
